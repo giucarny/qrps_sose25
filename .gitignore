@@ -1,5 +1,7 @@
 # Data 
-/data/notpublic
+/data/ess
+/docs/literature/original/
+
 
 # History files
 .Rhistory
