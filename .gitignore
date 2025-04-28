@@ -1,6 +1,7 @@
-# Data 
+# (sub)directories 
 /data/
 /docs/literature/original/
+/scripts/dev/
 
 
 # History files
