@@ -4,6 +4,8 @@
 /scripts/dev/
 /docs/private/
 
+# course docs
+*qrps_sose25_syllabus_v1.docx
 
 # History files
 .Rhistory
