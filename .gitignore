@@ -3,7 +3,10 @@
 /docs/literature/original/
 /docs/dev
 /scripts/dev/
+/docs/dev/
 
+# course docs
+*qrps_sose25_syllabus.docx
 
 # History files
 .Rhistory
