@@ -1,12 +1,23 @@
-# 1. Admin # ----------------------------------------------------------------------
-## 1.1 Packages # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# Title: Class 4 code
+# Author: Giuseppe Carteny
+# Last update: 05.05.2025
+
+# When going through the code check the supplemental information marks here and there
+# And then check the `~/scripts/class4/class4_ees_supplinfo.R` script
+
+# It would be very useful if you take a look at the third class code, namely 
+# `~/scripts/class3/class3_code.R`
+
+# 1. Admin # -------------------------------------------------------------------
+
+## 1.1 Packages # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 
-# as usual, first thing load the packages 
+# As usual, first thing install and load the packages 
 
 # You can install them manually, one by one... for instance: 
 run <- F
-if(run) {                                       # Btw, this is an if statement... ever had the pleasure?
+if(run) { # <- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - # Check supplemental info script, A.1                                       
   install.packages('dplyr')
   install.packages('magrittr')
   install.packages('here')
@@ -29,7 +40,7 @@ want <- c('dplyr', 'magrittr', 'here', 'labelled', 'ggplot2')
 #    packages
 #      Note: .installed.packages() returns a matrix
 #      we get the first column of the matrix, which are the package names 
-#      and compare it with the list I want using the %in% operator      # <- - - - - - - do you know what's this?
+#      and compare it with the list I want using the %in% operator      # <- - - - - - - # Check supplemental info script, A.2
 have <- want %in% installed.packages()[,1] 
 
 # .c If some of the packages are not installed, then you install them sequentially
@@ -39,7 +50,7 @@ if (any(!have)) {  # Literally: If I don't have any of these packages then...
 
 # .d when all the required packages are installed, you load them 
 #    in a loop - first the first one, then the second, etc. 
-for(pckg in want) {library(pckg, character.only = T)}                  # <- - - - - - - do you know what's this?
+for(pckg in want) {library(pckg, character.only = T)}                  # <- - - - - - - # Check supplemental info script, A.3
 
 
 
@@ -69,10 +80,10 @@ rm(list=ls())
 
 # For instance 
 ## Base R
-df1 <- tibble(x=rnorm(100,5,2))
+df1 <- data.frame(x=rnorm(100,5,2))
 print(df1)
 x_mean <- mean(df1$x)
-df1 <- tibble(x_mean = x_mean)
+df1 <- data.frame(x_mean = x_mean)
 
 ## Tidyverse
 df1 <- tibble(x=rnorm(100,5,2))
@@ -93,9 +104,18 @@ df1 <- df1 %>% summarise(x_mean = mean(x))
 # a shorter form of `as.numeric()`. Just useful for typing less
 asn <- function(x) {as.numeric(x)} 
 
-# the standard error function - there's no inbuilt function in R
-se <- function(x) {sd(x, na.rm = F)/sqrt(length(x[!is.na(x)]))}
+vrbl <- c('Hello', '1.2')
+asn(vrbl)
 
+# the standard error function - there's no inbuilt function in R
+se <- function(gino) {sd(gino, na.rm = F)/sqrt(length(gino[!is.na(gino)]))}
+
+x <- c(rnorm(100, 0,1), rep(NA,10))
+x_mean <- mean(x, na.rm=T)
+x_sd <- sd(x, na.rm=T)
+x_n <- length(x[!is.na(x)])
+x_se <- x_sd/sqrt(x_n)
+x_se <- se(x)
 # Others can be built to solve some specific issues you might encounter
 
 
@@ -167,11 +187,11 @@ obs_x_country <-
 # Very usesful but dangerous! It will print EVERYTHING!
 # With big datasets don't do it, it will freeze your session/computer!
 
-# 4 Wrangle the data # -----------------------------------------------------------
+# 4  Wrangle the data # --------------------------------------------------------
 
 # Now it's time to wrangle a bit what we have here. 
 
-# 4.1 Basic wrangling # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# 4.1 Basic wrangling # - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 # Before moving to the substantive analyses you always need to think about what 
 # you would need/make your life easier
@@ -206,7 +226,7 @@ codes_and_labels <- ees2019$countrycode %>% val_labels
 # From the vector extract the labels
 labels <- attr(codes_and_labels, 'names')
 # From the vector extract the codes 
-codes <- as.numeric(codes_and_labels)
+codes <- asn(codes_and_labels)
 # Create a data.frame/tibble
 country_df <- data.frame(countrycode = codes, countryname = labels)
 
@@ -220,7 +240,9 @@ country_df <-
 # and then... we can join the countrynames with the whole dataset. 
 # The ees2019 dataframe and the country_df one share one column - "countrycode"
 # Then we merge the country_df with the ees2019 using this column 
-ees2019 <- merge(ees2019, country_df, by.x = "countrycode", by.y = "countrycode") %>% as_tibble
+ees2019 <- 
+  merge(ees2019, country_df, by.x = "countrycode", by.y = "countrycode") %>%
+  as_tibble
 
 ees2019 %>% count(countrycode, countryname) %>% print(n=Inf)
 
@@ -239,7 +261,7 @@ ees2019 %>% count(countrycode, countryname) %>% print(n=Inf)
 
 # 4.3. Variables of interest: attitudes toward EU integration 
 # First let's say we are interested in individual attitudes toward european 
-# integration. The variable is the "q23". 
+# integration. The 0variable is the "q23". 
 
 # Let's first assign a new variable, or rename it, so that we can remember it 
 # without checking everytime the questionnaire/codebook 
@@ -260,12 +282,14 @@ ees2019 %>%
   ggplot(aes(x=eu_int)) +  
   geom_bar()
 
+
+ees2019 %>% count(eu_int)
 # weird
 # Acccording to the codebook this variable should go from 0 to 10 
 # So what's wrong with it? The missing values! 
 # Let's see it 
 
-# Now, let's stop one second: missing va # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - # Focus missing values?
+# Now, let's stop one second: missing va # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - # Focus missing values
 # In individual-level surveys there are several possible missing values
 # Don't know: the respondent doesn't know what to reply and declares it
 # No reply: the respondent skipped the question 
@@ -282,6 +306,10 @@ ees2019 %>%
   filter(q6==2)
 
 # Indeed, but as you se... it's not always that linear and tidy :)
+
+# There are for instance some respondents that say "I didn't go to vote" 
+# And then.... they choose a party when asked which party they voted for (...)
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
 
 # Let's return to the EU integration 
@@ -374,8 +402,8 @@ ees2019_short
 eu_int_mean <- mean(ees2019_short$eu_int, na.rm=T)
 
 # we do this: 
-ees2019_short <- 
-  ees2019_short %>% 
+ees2019_short <-
+  ees2019_short %>%
   mutate(eu_int_mean = mean(eu_int, na.rm=T))
 
 # or this: 
@@ -384,11 +412,20 @@ eu_int_sum_df <-
   summarise(mean = mean(eu_int, na.rm=T))
 
 
+# Check the difference above between mutate and summarise! 
 
-# Now, we can get all the needed information 
-eu_int_sum_df <- 
+## 5.1 Univariate analyses: EU integration # - - - - - - - - - - - - - - - - - -
+### 5.1.1 prepare your data for the analyses #
+
+# Now, we can get all the needed information. 
+# The data.frame you need depends on what kind of information you want to include 
+# in your analyses. 
+
+# You are interested in preserving the original variable distribution? 
+# Then go for mutate: 
+eu_int_df <- 
   ees2019_short %>% 
-  dplyr::select(eu_int) %>% 
+  dplyr::select(eu_int) %>% # We select this variable to make the dataset tidier
   mutate(
     eu_int_mean = mean(eu_int, na.rm=T), 
     eu_int_sd = sd(eu_int, na.rm=T),
@@ -400,8 +437,27 @@ eu_int_sum_df <-
     eu_int_mean_95ci_lower = eu_int_mean-(1.96*eu_int_se),
   ) 
 
+# You are interested in just getting the descriptive statistics? 
+# Then go for summarise: 
+eu_int_sum_df <-              # here "sum" means "summary" 
+  ees2019_short %>% 
+  # dplyr::select(eu_int) %>% # here is not needed, because summarise will drop the other columns
+  summarise(
+    eu_int_mean = mean(eu_int, na.rm=T), 
+    eu_int_sd = sd(eu_int, na.rm=T),
+    eu_int_n = length(eu_int[!is.na(eu_int)]),
+    eu_int_se = eu_int_sd/sqrt(eu_int_n),
+    eu_int_68dist_upper = eu_int_mean+(1*eu_int_sd),
+    eu_int_68dist_lower = eu_int_mean-(1*eu_int_sd),
+    eu_int_mean_95ci_upper = eu_int_mean+(1.96*eu_int_se),
+    eu_int_mean_95ci_lower = eu_int_mean-(1.96*eu_int_se),
+  ) 
 
-eu_int_sum_df %>% 
+# Let's use the dataframe created using "mutate"
+# This is because we want to plot also the distribution of the original 
+# variable. 
+
+eu_int_df %>% 
   ggplot(aes(x=eu_int)) +
   geom_bar(alpha=.5) +
   geom_vline(xintercept=eu_int_mean, colour='red4') +
@@ -410,15 +466,30 @@ eu_int_sum_df %>%
   geom_vline(aes(xintercept=eu_int_mean_95ci_upper), colour='indianred4') +
   geom_vline(aes(xintercept=eu_int_mean_95ci_lower), colour='indianred4') 
 
-eu_int_sum_df %>% 
+# The standard error is SUPER SMALL! See here: 
+
+eu_int_df %>% 
   ggplot(aes(x=eu_int)) +
-  geom_bar(alpha=.5) +
+  # geom_bar(alpha=.5) +
   geom_vline(xintercept=eu_int_mean, colour='red4') +
   geom_vline(aes(xintercept=eu_int_68dist_upper), colour='blue4') +
   geom_vline(aes(xintercept=eu_int_68dist_lower), colour='blue4') + 
   geom_vline(aes(xintercept=eu_int_mean_95ci_upper), colour='indianred4') +
   geom_vline(aes(xintercept=eu_int_mean_95ci_lower), colour='indianred4') +
-  coord_cartesian(xlim=c(5.3,5.5))
+  coord_cartesian(xlim=c(5.3,5.45))
+
+
+# But this is because we have 26k+ observations!                   # <- - - - - - - # Check supplemental info script, A.3, and class3 
+# In our case, however, you have such a huge number of observations because 
+# you're not considering differences among countries, or groups, etc... 
+# When you start accounting for these things the standard error of your 
+# estimates will shrink because: 
+# - you have less observations 
+# - the distribution might change across groups
+
+
+
+
 
 
 
