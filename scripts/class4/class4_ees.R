@@ -355,7 +355,12 @@ ees2019 <-
   ees2019 %>% 
   mutate(
     age = 2019 - d4_1, # birth year
-    gender = d3,
+    gender = case_when(
+      d3==1 ~ 'Man',
+      d3==2 ~ 'Woman',
+      d3==3 ~ 'Other',
+      T ~ NA
+    ),
     urbrur = d8,
     marital = case_when(d5>14 ~ NA_real_,
                         d5>=1 & d5<=8 ~ 1, 
@@ -393,7 +398,7 @@ vrbls2keep <-
 ees2019_short <- ees2019 %>% dplyr::select(all_of(vrbls2keep)) 
 ees2019_short
 
-# 5. Analyses # -------------------------------------------------------------------
+# 5.1 EU integration: univariate analysis # -----------------------------------
 
 # Let's have some descriptive analysis of the EUintegration variable 
 # And let's work using (almost) only data.frames.
@@ -414,8 +419,6 @@ eu_int_sum_df <-
 
 # Check the difference above between mutate and summarise! 
 
-## 5.1 Univariate analyses: EU integration # - - - - - - - - - - - - - - - - - -
-### 5.1.1 prepare your data for the analyses #
 
 # Now, we can get all the needed information. 
 # The data.frame you need depends on what kind of information you want to include 
@@ -460,39 +463,295 @@ eu_int_sum_df <-              # here "sum" means "summary"
 eu_int_df %>% 
   ggplot(aes(x=eu_int)) +
   geom_bar(alpha=.5) +
-  geom_vline(xintercept=eu_int_mean, colour='red4') +
-  geom_vline(aes(xintercept=eu_int_68dist_upper), colour='blue4') +
-  geom_vline(aes(xintercept=eu_int_68dist_lower), colour='blue4') + 
-  geom_vline(aes(xintercept=eu_int_mean_95ci_upper), colour='indianred4') +
-  geom_vline(aes(xintercept=eu_int_mean_95ci_lower), colour='indianred4') 
+  geom_vline(aes(xintercept=eu_int_mean), colour='indianred4') +
+  geom_vline(aes(xintercept=eu_int_68dist_upper), colour='dodgerblue4') +
+  geom_vline(aes(xintercept=eu_int_68dist_lower), colour='dodgerblue4') + 
+  geom_vline(aes(xintercept=eu_int_mean_95ci_upper), colour='indianred') +
+  geom_vline(aes(xintercept=eu_int_mean_95ci_lower), colour='indianred') 
+
 
 # The standard error is SUPER SMALL! See here: 
 
 eu_int_df %>% 
   ggplot(aes(x=eu_int)) +
   # geom_bar(alpha=.5) +
-  geom_vline(xintercept=eu_int_mean, colour='red4') +
-  geom_vline(aes(xintercept=eu_int_68dist_upper), colour='blue4') +
-  geom_vline(aes(xintercept=eu_int_68dist_lower), colour='blue4') + 
-  geom_vline(aes(xintercept=eu_int_mean_95ci_upper), colour='indianred4') +
-  geom_vline(aes(xintercept=eu_int_mean_95ci_lower), colour='indianred4') +
+  geom_vline(aes(xintercept=eu_int_mean), colour='indianred4') +
+  geom_vline(aes(xintercept=eu_int_68dist_upper), colour='dodgerblue4') +
+  geom_vline(aes(xintercept=eu_int_68dist_lower), colour='dodgerblue4') + 
+  geom_vline(aes(xintercept=eu_int_mean_95ci_upper), colour='indianred') +
+  geom_vline(aes(xintercept=eu_int_mean_95ci_lower), colour='indianred') +
   coord_cartesian(xlim=c(5.3,5.45))
 
 
 # But this is because we have 26k+ observations!                   # <- - - - - - - # Check supplemental info script, A.3, and class3 
-# In our case, however, you have such a huge number of observations because 
-# you're not considering differences among countries, or groups, etc... 
+# But this is because we're not considering differences among countries, or groups, 
+# etc... 
 # When you start accounting for these things the standard error of your 
 # estimates will shrink because: 
 # - you have less observations 
 # - the distribution might change across groups
 
 
+# 5.2 EU integration: bivariate analysis (means difference) # ------------------
+# let's see:
+
+# the "by" argument in mutate/summarise allows to create stats by group(s)!
+eu_int_sum_df_by <-              
+  ees2019_short %>% 
+  mutate(
+    .by = c(countryname, gender), # <- the "by" argument 
+    eu_int_mean = mean(eu_int, na.rm=T), 
+    eu_int_sd = sd(eu_int, na.rm=T),
+    eu_int_n = length(eu_int[!is.na(eu_int)]),
+    eu_int_se = eu_int_sd/sqrt(eu_int_n),
+    eu_int_68dist_upper = eu_int_mean+(1*eu_int_sd),
+    eu_int_68dist_lower = eu_int_mean-(1*eu_int_sd),
+    eu_int_mean_95ci_upper = eu_int_mean+(1.96*eu_int_se),
+    eu_int_mean_95ci_lower = eu_int_mean-(1.96*eu_int_se),
+  ) 
+
+eu_int_sum_df_by
+# Mmmh... there are some missing values in the mean,sd,... estimates. 
+# This mostly related to the "other" category of the gender variable - 
+# we have too few observations.
+# we might decide to either drop the category or aggregate it with another one. 
+# for sake of simplicity I'll just drop it now. 
+
+# Tip: See the "facet_grid" function below!
+
+eu_int_sum_df_by_plot <- 
+  eu_int_sum_df_by %>% 
+  filter(gender!='Other') %>% 
+  ggplot(aes(x=eu_int)) +
+  geom_bar(alpha=.5) +
+  geom_vline(aes(xintercept=eu_int_mean), colour='indianred4') +
+  geom_vline(aes(xintercept=eu_int_68dist_upper), colour='dodgerblue4') +
+  geom_vline(aes(xintercept=eu_int_68dist_lower), colour='dodgerblue4') + 
+  geom_vline(aes(xintercept=eu_int_mean_95ci_upper), colour='indianred') +
+  geom_vline(aes(xintercept=eu_int_mean_95ci_lower), colour='indianred') +
+  facet_grid(countryname~gender)              
+
+eu_int_sum_df_by_plot
+
+# Ok definitely too many countries for one visualization!
+# Let's select 4/5
+
+eu_int_sum_df_by_plot <- 
+  eu_int_sum_df_by %>% 
+  filter(
+    gender!='Other',
+    countryname %in% c('Austria', 'Germany', 'Italy', 'Estonia')
+  ) %>% 
+  ggplot(aes(x=eu_int)) +
+  geom_bar(alpha=.3) +
+  geom_vline(aes(xintercept=eu_int_mean), colour='indianred4') +
+  geom_vline(aes(xintercept=eu_int_68dist_upper), colour='dodgerblue4') +
+  geom_vline(aes(xintercept=eu_int_68dist_lower), colour='dodgerblue4') + 
+  geom_vline(aes(xintercept=eu_int_mean_95ci_upper), colour='indianred') +
+  geom_vline(aes(xintercept=eu_int_mean_95ci_lower), colour='indianred') +
+  facet_grid(countryname~gender)
+
+eu_int_sum_df_by_plot
+
+# Note: be clear about what you want to compare! 
+# According to this, you can switch the order in `facet_grid`. 
+#
+# For instance in the current version, the plot allows for a clear comparison 
+# across countries by gender. But you might be interested in checking gender 
+# differences within each country. In this case you should invert the 
+# arguments of the function. 
+
+# Returning to the previous plot, the picture conveys some interesting info: 
+# there seems to be a statistical significant difference (mean + c.i. 95%) 
+# between Germany and Estonia, irrespective of gender
+
+# Let's check it out 
+# we get first the vectors for eu int for both Estonia and Germany
+# We can do it in several ways, but in this case base R is more compact
+# especially if combined with a for loop
+
+# Create an empty list
+vec_list <- list()
+
+# Fill the list with the vectors
+# Naming each list with the countryname
+countries2test <- c('Estonia','Germany', 'Austria', 'Italy')
+for(cntry in countries2test) {
+  condition <- ees2019_short$countryname==cntry
+  eu_int_vector <- ees2019_short$eu_int[condition] # gets euint only for country==cntry
+  eu_int_vector <- eu_int_vector[!is.na(eu_int_vector)] # remove missing values
+  vec_list[[cntry]] <- eu_int_vector # assign the vector to the list 
+}
+
+# Then let's do a t
+
+ttest_estonia_germany <- t.test(vec_list[['Estonia']], vec_list[['Germany']]) 
+ttest_italy_germany <- t.test(vec_list[['Italy']], vec_list[['Germany']]) 
+
+
+# this is an option to tell R to do not show values in scientific notation
+options(scipen=99) 
+
+# Then let's check the ttest results (p-value in this case) 
+ttest_estonia_germany$p.value # This is very small, means that there's a 
+                              # statistically significant difference
+
+ttest_italy_germany$p.value # Not statistically significant 
+
+# This implies that in the first case there's a substantially different 
+# average opinion about EU integration between Estonian and German respondents, 
+# whereas Germans and Italians have a pretty 
+# similar average position
+
+# !!! Important: statistical significance can be important... but you shouldn't 
+# look for only for that! 
+# 
+#   You might have a super small difference, which is however statistically 
+#     significant - for example, because you have tons of observations
+# 
+#   You might have a big difference between two estimates, that are not 
+#     statistically significant because you have not enough data to reject 
+#     you null hypothesis.... but still, it would be relevant to know the 
+#     magnitude of the difference in any case!
 
 
 
 
 
+# 5.3 EU integration: correlation analzsis # -----------------------------------
+
+# Do attitudes toward EU integration relate with other attitudes (say, left-right positions)?
+# Let's look at it with a simple correlation test
+
+# First, you need for each observation valid values for both variables
+# This means that you cannot use observations with just a score on LR and not 
+# on EU int or viceversa 
+
+euint_lr_df <-
+  ees2019_short %>% 
+  dplyr::select(respid, countryname, eu_int, self_lr)
+
+# Let's drop any row with missing values with `na.omit`
+euint_lr_df_naomit <- euint_lr_df %>% na.omit
+
+# WARNING: this command is very useful, but use it CAREFULLY # - - - - - - - - # !!! # 
+# it considers missing values on ANY column
+# In this case we are safe because respid has no missing values,
+# countryname the same, and eu_int and self_lr are the only variables 
+# we are interested in 
+# But if we had a third variable, the command would (likely) drop 
+# additional observations. 
+# So, to be safe, you can always use the `filter` function with a 
+# specific condition: 
+# - filter ONLY observations in which both eu_int and self_lr are NOT missing
+euint_lr_df_filtered <- euint_lr_df %>% filter(!is.na(eu_int) & !is.na(self_lr))
+# in our case, same result as before.
+all.equal(euint_lr_df_filtered, euint_lr_df_naomit) # TRUE
 
 
+# but check the difference including, for instance, the immi variable 
+euint_lr_immi <-
+  ees2019_short %>% 
+  dplyr::select(respid, countryname, eu_int, self_lr, immigr)
 
+euint_lr_immi_naomit <- euint_lr_immi %>% na.omit
+euint_lr_immi_filtered <- euint_lr_immi %>% filter(!is.na(eu_int) & !is.na(self_lr))
+
+all.equal(euint_lr_immi_naomit, euint_lr_immi_filtered) # the 2 df are not equal
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - # !!! # 
+
+# Let's return to the correlation 
+# Let's extract the variable vectors (columns) for the correlation test
+euintvec <- euint_lr_df_naomit[['eu_int']]
+lrvec <- euint_lr_df_naomit[['self_lr']]
+
+cor.test(euintvec, lrvec) # Statistically significant negative correlation! 
+# But the effect is VERY small! 
+
+# Let's inspect it graphically with `geom_smooth`
+# this command fits a line in the plot using a regression model of your choice
+# It returns both point estimates and error of the estimate - shaded areas
+# In this case we use 'lm' the linear model - we'll see it next week 
+euint_lr_df_naomit %>% 
+  ggplot(aes(x=self_lr,y=eu_int)) +
+  geom_point() + 
+  geom_smooth(method='lm') 
+
+# Doesn't look great... mostly because the scales are just 0-10
+# So the data points are a bit... ugly because there's not much variation 
+# between the values
+# So... 
+euint_lr_df_naomit %>% 
+  ggplot(aes(x=self_lr,y=eu_int)) +
+  # geom_point() + 
+  geom_jitter(alpha=.01) + 
+  geom_smooth(method='lm')
+
+# Slightly better... but with these scale we can just drop the points/jitter
+euint_lr_df_naomit %>% 
+  ggplot(aes(x=self_lr,y=eu_int)) +
+  geom_smooth(method='lm')
+
+# Yes, better. 
+# So, as we said: the correlation we find is statistically significant. 
+# the graph looks also nice.... but be aware of the MAGNITUDE on the Y axis
+# That is a very very very weak correlation (even if statistically significant)
+# You see it like that just because of the scale of the Y axis.
+# WHat happens if you change the scale? 
+euint_lr_df_naomit %>% 
+  ggplot(aes(x=self_lr,y=eu_int)) +
+  geom_smooth(method='lm') +
+  scale_y_continuous(limits = c(2,8)) # see? 
+
+# I bet that if we inspect these correlations by country... they would change? 
+
+# Let's see austria
+euintvec_austria <- euint_lr_df_naomit[['eu_int']][euint_lr_df_naomit$countryname=='Austria']
+lrvec_austria <- euint_lr_df_naomit[['self_lr']][euint_lr_df_naomit$countryname=='Austria']
+cor.test(euintvec_austria, lrvec_austria) 
+# Statistically significant, and relatively strong, negative correlation! 
+
+# Let's check graphically
+countries2test <- c('Estonia','Germany', 'Austria', 'Italy')
+
+euint_lr_df_naomit %>% 
+  filter(countryname %in% countries2test) %>% 
+  ggplot(aes(x=self_lr,y=eu_int)) +
+  geom_smooth(method='lm') +
+  scale_y_continuous(limits = c(2,8)) +
+  facet_wrap(~countryname)
+
+# There's quite some variability :) But the correlations are anything but great
+# Your time to explore
+
+# Bonus # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# The relationship between EU integration attitdues and left-right is actually 
+# non-linear in most cases. There's a lot of literature on this when talking 
+# about *party* positions on these two dimensions. When we talk about 
+# individuals this is similar but much less pronounced and noisy
+
+# look what happens when you create a non-linear relationship between eu-int 
+# Let's say a quadratic
+euint_lr_df_naomit %>% 
+  filter(countryname %in% countries2test) %>% 
+  ggplot(aes(x=self_lr,y=eu_int)) +
+  geom_smooth(method='lm', formula = 'y ~ I(x^2)', colour='dodgerblue4', alpha=.4) +
+  scale_y_continuous(limits = c(2,8)) +
+  facet_wrap(~countryname)
+
+# Or let's say a polinomial approach
+euint_lr_df_naomit %>% 
+  filter(countryname %in% countries2test) %>% 
+  ggplot(aes(x=self_lr,y=eu_int)) +
+  geom_smooth(method='gam', colour='indianred4', linetype='dashed', alpha=.4) +
+  scale_y_continuous(limits = c(2,8)) +
+  facet_wrap(~countryname)
+
+# Or both together - i remove the errors of the estimates for clarity
+euint_lr_df_naomit %>% 
+  filter(countryname %in% countries2test) %>% 
+  ggplot(aes(x=self_lr,y=eu_int)) +
+  geom_smooth(method='gam', colour='indianred4', fill='indianred', linetype='dashed', alpha=.2) +
+  geom_smooth(method='lm', formula = 'y ~ I(x^2)', colour='dodgerblue4',colour='dodgerblue2', alpha=.3) +
+  scale_y_continuous(limits = c(2,8)) +
+  facet_wrap(~countryname)
