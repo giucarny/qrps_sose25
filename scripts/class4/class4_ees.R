@@ -618,7 +618,7 @@ ttest_italy_germany$p.value # Not statistically significant
 
 
 
-# 5.3 EU integration: correlation analzsis # -----------------------------------
+# 5.3 EU integration: correlation analysis # -----------------------------------
 
 # Do attitudes toward EU integration relate with other attitudes (say, left-right positions)?
 # Let's look at it with a simple correlation test
