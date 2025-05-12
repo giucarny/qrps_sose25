@@ -8,7 +8,7 @@
 ## 1.1 Packages # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 want <- c('dplyr', 'magrittr', 'here', 'labelled', 'ggplot2', 'ggeffects', 
-          'tidyr', 'ggridges')
+          'tidyr', 'ggridges', 'marginaleffects')
 have <- want %in% installed.packages()[,1]            
 if (any(!have)) { install.packages(want[!have]) }     
 for(pckg in want) {library(pckg, character.only = T)} 
@@ -42,7 +42,9 @@ std2_foo <- function(x) {(x-mean(x,na.rm=T))/(2*sd(x,na.rm=T))}
 # 3. source the data # ---------------------------------------------------------
 
 source(here('scripts', 'class5', 'class5_dataprep_code.R'))
+here()
 
+list.files(here('scripts'))
 
 # 4. wrangle the data again # --------------------------------------------------
 # Most of the times, data needs to be reshaped for statistical modelling. 
@@ -125,6 +127,9 @@ ees2019_short_de <-
       )
     )
   )
+
+
+ees2019_short_de[,c('age', 'age_z', 'age_res')]
 
 # # Then we can factorize the categorical variables of interest # [Chunk muted, for example]
 # ees2019_short_de <- 
@@ -393,10 +398,10 @@ stargazer::stargazer(fit_6, type='text')
 # Let's add another variable instead of immigration
 data_fit_7 <- 
   ees2019_short_de %>% 
-  dplyr::select(self_lr_z2, redistr_z2, regulation_z2, age_z2, gender, edu_rec) %>% 
+  dplyr::select(self_lr, redistr_z2, regulation_z2, age_z2, gender, edu_rec) %>% 
   na.omit
 
-frml_fit_7 <- 'self_lr_z2 ~ redistr_z2 + regulation_z2 + age_z2 + gender + edu_rec'
+frml_fit_7 <- 'self_lr ~ redistr_z2 + regulation_z2 + age_z2 + gender + edu_rec'
 
 fit_7 <- lm(formula = frml_fit_7, data = data_fit_7)
 
