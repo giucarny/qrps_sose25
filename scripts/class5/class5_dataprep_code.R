@@ -104,6 +104,12 @@ ees2019 <-
       edu_rec > 19  | edu==3 ~ 3,
       T ~ edu_rec
     ),
+      soc_class     = case_when(
+        as.numeric(d7) <= 2 ~ 1,
+        as.numeric(d7) == 3 ~ 2,
+        as.numeric(d7) %in% c(4, 5) ~ 3,
+        as.numeric(d7) >  5 ~ NA_real_
+      ),
     marital = case_when(d5>14 ~ NA_real_,
                         d5>=1 & d5<=8 ~ 1, 
                         d5>=9 & d5<=14 ~ 0),
@@ -112,7 +118,7 @@ ees2019 <-
     redistr = ifelse(q14_2>10,NA,q14_2),
     ss_marriage = ifelse(q14_3>10,NA,q14_3),
     civ_lib = ifelse(q14_4>10,NA,q14_4),
-    immigr = ifelse(q14_5>10,NA,q14_5),
+    immigr = ifelse(q14_5>10,NA,abs(as.numeric(q14_5)-10)),
     envir = ifelse(q14_6>10,NA,q14_6),
     satwithdem = case_when(as.numeric(q3) >  4 ~ NA_real_,
                            as.numeric(q3) <= 4 ~ abs(as.numeric(q3)-5),
@@ -128,7 +134,7 @@ vrbls2keep <-
   c(# Identifiers
     'respid', 'countryname', 
     # Sociodemograpic variables
-    'age','gender', 'urbrur', 'marital', 'edu_rec',
+    'age','gender', 'urbrur', 'marital', 'edu_rec', 'soc_class', 
     # Variables of interest
     'self_lr','eu_int', 'regulation', 'redistr', 
     'ss_marriage', 'civ_lib', 'immigr', 'envir', 
@@ -137,3 +143,7 @@ vrbls2keep <-
 
 ees2019_short <- ees2019 %>% dplyr::select(all_of(vrbls2keep)) 
 
+ees2019_short[,c('immigr', 'self_lr')] %>% na.omit %>% ggplot(aes(x=self_lr, y=immigr))+ geom_jitter(alpha=.1) + geom_smooth()
+ees2019_short[,c('redistr', 'self_lr')] %>% na.omit %>% ggplot(aes(x=self_lr, y=redistr))+ geom_jitter(alpha=.1) + geom_smooth()
+
+                                                              
