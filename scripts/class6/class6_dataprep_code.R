@@ -86,6 +86,7 @@ ees2019 %>%
 # NOTE: you can add yours using the logic (and checks) used above for EU int
 #       Here I already know the variables, so I just quickly wrangle them 
 
+
 ees2019 <- 
   ees2019 %>% 
   mutate(
@@ -129,9 +130,15 @@ ees2019 <-
     envir = ifelse(q14_6>10,NA,q14_6),
     satwithdem = case_when(as.numeric(q3) >  4 ~ NA_real_,
                            as.numeric(q3) <= 4 ~ abs(as.numeric(q3)-5),
-                           T ~ as.numeric(q3))
+                           T ~ as.numeric(q3)),
+    strongleader = case_when(
+      as.numeric(q17_4) > 5 ~ NA_real_,
+      as.numeric(q17_4) <= 5 ~ abs(as.numeric(q17_4)-6)
+    )
   )
-
+# ees2019 %>% count(q17_4, strongleader)
+# ees2019 %>% count(q14_4, civ_lib)
+# ees2019 %>% count(q14_5, immigr)
 
 
 
@@ -144,13 +151,13 @@ vrbls2keep <-
     'age','gender', 'urbrur', 'marital', 'edu_rec', 'soc_class', 
     # Variables of interest
     'self_lr','eu_int', 'eu_mem', 'regulation', 'redistr', 
-    'ss_marriage', 'civ_lib', 'immigr', 'envir', 
+    'ss_marriage', 'civ_lib', 'immigr', 'envir', 'strongleader',
     'satwithdem'
   )
 
 ees2019_short <- ees2019 %>% dplyr::select(all_of(vrbls2keep)) 
 
-ees2019_short[,c('immigr', 'self_lr')] %>% na.omit %>% ggplot(aes(x=self_lr, y=immigr))+ geom_jitter(alpha=.1) + geom_smooth()
-ees2019_short[,c('redistr', 'self_lr')] %>% na.omit %>% ggplot(aes(x=self_lr, y=redistr))+ geom_jitter(alpha=.1) + geom_smooth()
+# ees2019_short[,c('immigr', 'self_lr')] %>% na.omit %>% ggplot(aes(x=self_lr, y=immigr))+ geom_jitter(alpha=.1) + geom_smooth()
+# ees2019_short[,c('redistr', 'self_lr')] %>% na.omit %>% ggplot(aes(x=self_lr, y=redistr))+ geom_jitter(alpha=.1) + geom_smooth()
 
                                                               

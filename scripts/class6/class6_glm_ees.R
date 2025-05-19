@@ -1,6 +1,6 @@
-# Title: Class 5 code - estimation
+# Title: Class 6 code - estimation
 # Author: Giuseppe Carteny
-# Last update: 10.05.2025
+# Last update: 19.05.2025
 
 
 # 1. Admin 
@@ -130,19 +130,151 @@ fit_8_eu_int_pred_me
 # Marginal effects # -----------------------------------------------------------
 # Let's use another model with another DV to explain this 
 
+marginaleffects::slopes(fit_8, variable = 'eu_int_z2') %>% 
+  as_tibble() %>% 
+  summarise(
+    estimate = mean(estimate),
+    conf.low = mean(conf.low),
+    conf.high = mean(conf.high)
+  ) %>% 
+  ggplot(aes(x=0, y = estimate, ymin = conf.low, ymax = conf.high)) +
+  geom_errorbar(width = 0.1, colour = 'dodgerblue4') +
+  geom_point(size = 3) +
+  geom_hline(yintercept = 0, linetype = 'dashed', colour = 'indianred4')
 
-# Let's see the expected/predicted values 
 
-ggpredict(fit_8, terms=c('eu_int_z2 [all]')) %>% 
-  as_tibble %>% 
-  ggplot(aes(x = x, y = predicted, ymin = conf.low, ymax = conf.high)) + # colour=group,fill=group
-  geom_ribbon(alpha=.25) +
-  geom_line() +
-  scale_colour_viridis_d(option='plasma', direction=-1, begin=.1,end=.6, name = 'Attitudes toward') +
-  scale_fill_viridis_d(option='inferno', direction=-1, begin=.1,end=.6, name = 'Attitudes toward') +
-  xlab('Attitude scale') +
-  ylab('Predicted values (Left-Right self-placement)') +
-  theme_bw() +
-  theme(legend.position = 'top')
-  
+# Authoritarian model # --------------------------------------------------------
 
+
+ees2019_short_de %>% count(civ_lib)
+ees2019_short_de %>% count(immigr)
+ees2019_short_de %>% count(strongleader)
+
+cor_test_civlib_immigr <- 
+  ees2019_short_de %>% 
+  dplyr::select(civ_lib, immigr) %>% 
+  na.omit()
+
+cor.test(cor_test_civlib_immigr[[1]], cor_test_civlib_immigr[[2]])
+
+cor_test_civlib_immigr %>% 
+  ggplot(aes(x=civ_lib, y=immigr)) +
+  geom_point() +
+  geom_smooth()
+
+cor_test_strongleader_immigr <- 
+  ees2019_short_de %>% 
+  dplyr::select(strongleader, immigr) %>% 
+  na.omit()
+
+cor.test(cor_test_strongleader_immigr[[1]], cor_test_strongleader_immigr[[2]])
+
+cor_test_strongleader_immigr %>% 
+  ggplot(aes(x=strongleader, y=immigr)) +
+  geom_point() +
+  geom_smooth()
+
+cor_test_strongleader_civ_lib <- 
+  ees2019_short_de %>% 
+  dplyr::select(strongleader, civ_lib) %>% 
+  na.omit()
+
+cor.test(cor_test_strongleader_civ_lib[[1]], cor_test_strongleader_civ_lib[[2]])
+
+cor_test_strongleader_civ_lib %>% 
+  ggplot(aes(x=strongleader, y=civ_lib)) +
+  geom_point() +
+  geom_smooth(method='lm')
+
+# Strong leader LM 
+
+df_strongleader_lm <- 
+  ees2019_short_de %>% 
+  dplyr::select(strongleader, edu_rec, gender_dic, age_z2) %>% 
+  na.omit()
+
+frml_strongleader_lm <- 'strongleader ~ edu_rec + gender_dic + age_z2'
+
+fit_strongleader_lm <- 
+  lm(
+    formula = frml_strongleader_lm,
+    data = df_strongleader_lm
+  )
+
+summary(fit_strongleader_lm)
+
+ggpredict(fit_strongleader_lm, terms = 'edu_rec') %>% plot()
+
+# Strong leader logit
+
+df_strongleader_logit <- 
+  ees2019_short_de %>%
+  mutate(strongleader_dic = ifelse(strongleader>=4, 1, 0)) %>% 
+  dplyr::select(strongleader_dic, edu_rec, gender_dic, age_z2) %>% 
+  na.omit()
+
+frml_strongleader_logit <- 'strongleader_dic ~ edu_rec + gender_dic + age_z2'
+
+fit_strongleader_logit <- 
+  glm(
+    formula = frml_strongleader_logit,
+    data = df_strongleader_logit,
+    family = binomial()
+  )
+
+summary(fit_strongleader_logit)
+
+ggpredict(fit_strongleader_logit, terms = 'edu_rec') %>% plot()
+
+# Satisfaction w/ democracy # -------------------------------------------------
+
+ees2019 %>% count(q3, satwithdem)
+
+
+# sat. with dem LM 
+
+df_satwithdem_lm <- 
+  ees2019_short_de %>% 
+  dplyr::select(satwithdem, self_lr_z2, edu_rec, gender_dic, age_z2) %>% 
+  na.omit()
+
+frml_satwithdem_lm <- 'satwithdem ~ self_lr_z2 + edu_rec + gender_dic + age_z2'
+
+fit_satwithdem_lm <- 
+  lm(
+    formula = frml_satwithdem_lm,
+    data = df_satwithdem_lm
+  )
+
+summary(fit_satwithdem_lm)
+
+ggpredict(fit_satwithdem_lm, terms = 'self_lr_z2') %>% plot()
+
+marginaleffects::slopes(fit_satwithdem_lm, variables = 'self_lr_z2') %>% 
+  as_tibble() %>% 
+  summarise(
+    estimate = mean(estimate),
+    conf.low = mean(conf.low),
+    conf.high = mean(conf.high)
+  )
+ 
+# sat. with dem logit
+
+df_satwithdem_logit <- 
+  ees2019_short_de %>%
+  mutate(satwithdem_dic = ifelse(satwithdem>=3, 1, 0)) %>% 
+  dplyr::select(satwithdem_dic, self_lr_z2, edu_rec, gender_dic, age_z2) %>% 
+  na.omit()
+
+frml_satwithdem_logit <- 'satwithdem_dic ~ self_lr_z2 + edu_rec + gender_dic + age_z2'
+
+fit_satwithdem_logit <- 
+  glm(
+    formula = frml_satwithdem_logit,
+    data = df_satwithdem_logit,
+    family = binomial()
+  )
+
+summary(fit_satwithdem_logit)
+
+ggpredict(fit_satwithdem_logit, terms = 'self_lr_z2') %>% plot()
