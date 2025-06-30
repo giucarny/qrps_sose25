@@ -3,6 +3,8 @@ library(tidyverse)
 library(broom)
 library(quanteda)
 library(quanteda.textmodels)
+library(quanteda.textstats)
+library(openxlsx)
 
 # install new packages for today's exercises
 install.packages("tidytext")
